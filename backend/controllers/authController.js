@@ -36,19 +36,27 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ message: 'email and password are required' });
+  const { identifier, password } = req.body; 
+  if (!identifier || !password) return res.status(400).json({ message: 'Identifier and password are required' });
+  
   try {
-    const result = await pool.query('SELECT id, username, email, password_hash, bio FROM users WHERE email=$1', [email]);
+    const result = await pool.query(
+      'SELECT id, username, email, password_hash, bio FROM users WHERE LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($1)', 
+      [identifier]
+    );
+
     if (!result.rows.length) return res.status(401).json({ message: 'Invalid credentials' });
+
     const user = result.rows[0];
     const valid = await bcrypt.compare(password, user.password_hash);
+    
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
+
     const token = createToken(user);
     delete user.password_hash;
     res.json({ user, token });
   } catch (err) {
-    console.error(err);
+    console.error('Login error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

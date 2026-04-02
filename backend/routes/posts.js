@@ -11,9 +11,12 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.post('/', auth, upload.single('media'), postController.createPost);
-router.get('/:id', auth, postController.getPost);
-router.get('/feed', auth, postController.getFeed);
-router.get('/explore', auth, postController.explore);
+router.use(auth);
+
+// IMPORTANT: Define specific routes BEFORE generic ones like /:id
+router.get('/feed', postController.getFeed);
+router.get('/explore', postController.explore);
+router.post('/', upload.single('media'), postController.createPost);
+router.get('/:id', postController.getPost);
 
 module.exports = router;
