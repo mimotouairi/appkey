@@ -3,12 +3,23 @@ const { v4: uuidv4 } = require('uuid');
 
 exports.createPost = async (req, res) => {
   const userId = req.user.id;
-  const { caption, media_url, type } = req.body;
-  if (!media_url || !type) return res.status(400).json({ message: 'Missing media_url or type' });
+  const { caption } = req.body;
+  
+  let mediaUrl = req.body.media_url; // fallback to URL if provided
+  let type = req.body.type || 'image';
+
+  if (req.file) {
+    // Generate public URL. Note: ideally PLATFORM_DOMAIN should be used
+    mediaUrl = `/uploads/${req.file.filename}`;
+    type = req.file.mimetype.startsWith('video') ? 'video' : 'image';
+  }
+
+  if (!mediaUrl) return res.status(400).json({ message: 'Missing media file or url' });
+
   try {
     const result = await pool.query(
       'INSERT INTO posts(id, user_id, caption, media_url, type, created_at) VALUES($1,$2,$3,$4,$5,NOW()) RETURNING *',
-      [uuidv4(), userId, caption || '', media_url, type]
+      [uuidv4(), userId, caption || '', mediaUrl, type]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
