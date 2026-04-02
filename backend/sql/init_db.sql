@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS posts (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   caption TEXT DEFAULT '',
   media_url TEXT NOT NULL,
-  type TEXT NOT NULL CHECK(type IN ('post','story','reel')),
+  type TEXT NOT NULL CHECK(type IN ('post','story','reel','image','video')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
